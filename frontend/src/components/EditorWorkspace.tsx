@@ -98,7 +98,7 @@ export default function EditorWorkspace({ initialFile, sessionId, onLeave }: Edi
   const fabricRedoStack = useRef<Record<number, string[]>>({});
 
   // Backend url
-  const BACKEND_URL = 'http://localhost:8000';
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
   // Load PDF and setup workspace
   useEffect(() => {
