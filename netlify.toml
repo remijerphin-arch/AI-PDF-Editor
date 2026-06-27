@@ -1,0 +1,10 @@
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "out"
+
+# Disable the Netlify Next.js Server-Side Runtime since we use clean Static HTML Export (out/)
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+  [plugins.inputs]
+    disable_nextjs_runtime = true
