@@ -1,0 +1,15 @@
+{
+  "name": "ultimate-pdf-editor",
+  "version": "1.0.0",
+  "description": "An AI-powered, privacy-first PDF editor using Next.js, FastAPI, and Fabric.js.",
+  "private": true,
+  "scripts": {
+    "frontend:dev": "npm run dev --prefix frontend",
+    "backend:dev": "backend\\.venv\\Scripts\\python.exe -m uvicorn main:app --reload --port 8000 --app-dir backend",
+    "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\"",
+    "install:all": "npm install && npm install --prefix frontend && python -m venv backend/.venv && backend\\.venv\\Scripts\\pip install -r backend/requirements.txt"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
