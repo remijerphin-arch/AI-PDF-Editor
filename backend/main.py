@@ -104,21 +104,19 @@ async def upload_pdf(
         shutil.copyfileobj(file.file, f)
         
     try:
-        # Check password and try to decrypt
-        doc = fitz.open(pdf_path)
-        if doc.is_encrypted:
+        # Check password and try to decrypt using pypdf
+        import pypdf
+        reader = pypdf.PdfReader(pdf_path)
+        if reader.is_encrypted:
             if password:
-                decrypted = doc.authenticate(password)
-                if not decrypted:
-                    doc.close()
+                status = reader.decrypt(password)
+                if status == 0:
                     raise HTTPException(status_code=401, detail="Incorrect password for PDF.")
             else:
-                doc.close()
                 return JSONResponse(
                     status_code=401, 
                     content={"detail": "Password required", "isEncrypted": True}
                 )
-        doc.close()
         
         # Extract initial layout and text
         metadata = PDFProcessor.get_metadata(pdf_path)
@@ -238,18 +236,17 @@ async def export_document(
                 PDFProcessor.compress_pdf(working_pdf, compressed_pdf)
                 working_pdf = compressed_pdf
                 
-            # Apply password protection
+            # Apply password protection using pypdf
             if request.password:
                 final_pdf = os.path.join(session_path, "document_secured.pdf")
-                doc = fitz.open(working_pdf)
-                # Save with encryption
-                doc.save(
-                    final_pdf, 
-                    encryption=fitz.PDF_ENCRYPT_AES_256, 
-                    user_pw=request.password, 
-                    owner_pw=str(uuid.uuid4())
-                )
-                doc.close()
+                import pypdf
+                reader = pypdf.PdfReader(working_pdf)
+                writer = pypdf.PdfWriter()
+                for page in reader.pages:
+                    writer.add_page(page)
+                writer.encrypt(user_password=request.password, owner_password=str(uuid.uuid4()))
+                with open(final_pdf, "wb") as f:
+                    writer.write(f)
                 working_pdf = final_pdf
                 
             # If any of the modifiers ran, copy it to the export path. Else copy the original
