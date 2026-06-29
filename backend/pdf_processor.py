@@ -1,7 +1,6 @@
 import os
 import pypdf
 import pdfplumber
-import pandas as pd
 from docx import Document
 from pptx import Presentation
 from pptx.util import Inches, Pt
@@ -271,14 +270,25 @@ class PDFProcessor:
 
     @staticmethod
     def export_to_excel(pdf_path: str, output_path: str):
-        """Extract tables and save into Excel workbook."""
+        """Extract tables and save into Excel workbook using openpyxl directly (no pandas/numpy required)."""
         tables = PDFProcessor.extract_tables(pdf_path)
         
-        with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
-            if not tables:
-                pd.DataFrame([["No tables found in PDF"]]).to_excel(writer, sheet_name="Sheet1", index=False, header=False)
-            else:
-                for idx, t in enumerate(tables):
-                    df = pd.DataFrame(t["data"])
-                    sheet_name = f"Page_{t['page']}_Table_{t['table_index']}"[:30]
-                    df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
+        import openpyxl
+        wb = openpyxl.Workbook()
+        
+        if not tables:
+            ws = wb.active
+            ws.title = "Sheet1"
+            ws.append(["No tables found in PDF"])
+        else:
+            # Remove default active sheet and create custom sheets per table
+            default_sheet = wb.active
+            wb.remove(default_sheet)
+            
+            for t in tables:
+                sheet_name = f"Page_{t['page']}_Table_{t['table_index']}"[:30]
+                ws = wb.create_sheet(title=sheet_name)
+                for row in t["data"]:
+                    ws.append(row)
+                    
+        wb.save(output_path)
